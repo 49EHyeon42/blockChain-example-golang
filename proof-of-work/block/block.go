@@ -2,8 +2,6 @@ package block
 
 import (
 	"time"
-
-	"github.com/49EHyeon42/blockChain-example-golang/proof-of-work/proof"
 )
 
 // Block keeps block headers
@@ -18,7 +16,7 @@ type Block struct {
 // NewBlock creates and returns Block
 func NewBlock(data string, prevBlockHash []byte) *Block {
 	block := &Block{time.Now().Unix(), []byte(data), prevBlockHash, []byte{}, 0}
-	pow := proof.NewProofOfWork(block)
+	pow := NewProofOfWork(block)
 	nonce, hash := pow.Run()
 
 	block.Hash = hash[:]
