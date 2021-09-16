@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"log"
 
-	"github.com/49EHyeon42/blockChain-example-golang/persistence-and-CLI/block"
 	"github.com/boltdb/bolt"
 )
 
@@ -38,21 +37,21 @@ func (bc *Blockchain) AddBlock(data string) {
 		log.Panic(err)
 	}
 
-	newBlock := block.NewBlock(data, lastHash)
+	newBlock := newBlock(data, lastHash)
 
 	err = bc.Db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
-		err := b.Put(newBlock.Hash, newBlock.Serialize())
+		err := b.Put(newBlock.hash, newBlock.serialize())
 		if err != nil {
 			log.Panic(err)
 		}
 
-		err = b.Put([]byte("l"), newBlock.Hash)
+		err = b.Put([]byte("l"), newBlock.hash)
 		if err != nil {
 			log.Panic(err)
 		}
 
-		bc.tip = newBlock.Hash
+		bc.tip = newBlock.hash
 
 		return nil
 	})
@@ -66,13 +65,13 @@ func (bc *Blockchain) Iterator() *BlockchainIterator {
 }
 
 // Next returns next block starting from the tip
-func (i *BlockchainIterator) Next() *block.Block {
-	var tempBlock *block.Block
+func (i *BlockchainIterator) Next() *block {
+	var tempBlock *block
 
 	err := i.Db.View(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
 		encodedBlock := b.Get(i.currentHash)
-		tempBlock = block.DeserializeBlock(encodedBlock)
+		tempBlock = deserializeBlock(encodedBlock)
 
 		return nil
 	})
@@ -81,7 +80,7 @@ func (i *BlockchainIterator) Next() *block.Block {
 		log.Panic(err)
 	}
 
-	i.currentHash = tempBlock.PrevBlockHash
+	i.currentHash = tempBlock.prevBlockHash
 
 	return tempBlock
 }
@@ -93,29 +92,29 @@ func NewBlockchain() *Blockchain {
 	if err != nil {
 		log.Panic(err)
 	}
-
+	
 	err = Db.Update(func(tx *bolt.Tx) error {
 		b := tx.Bucket([]byte(blocksBucket))
 
 		if b == nil {
 			fmt.Println("No existing blockchain found. Creating a new one...")
-			genesis := block.NewGenesisBlock()
+			genesis := newGenesisBlock()
 
 			b, err := tx.CreateBucket([]byte(blocksBucket))
 			if err != nil {
 				log.Panic(err)
 			}
 
-			err = b.Put(genesis.Hash, genesis.Serialize())
+			err = b.Put(genesis.hash, genesis.serialize())
 			if err != nil {
 				log.Panic(err)
 			}
 
-			err = b.Put([]byte("l"), genesis.Hash)
+			err = b.Put([]byte("l"), genesis.hash)
 			if err != nil {
 				log.Panic(err)
 			}
-			tip = genesis.Hash
+			tip = genesis.hash
 		} else {
 			tip = b.Get([]byte("l"))
 		}

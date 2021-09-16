@@ -1,4 +1,4 @@
-package block
+package blockchain
 
 import (
 	"bytes"
@@ -17,12 +17,12 @@ const targetBits = 24
 
 // ProofOfWork represents a proof-of-work
 type ProofOfWork struct {
-	block  *Block
+	block  *block
 	target *big.Int
 }
 
 // NewProofOfWork builds and returns a ProofOfWork
-func NewProofOfWork(b *Block) *ProofOfWork {
+func newProofOfWork(b *block) *ProofOfWork {
 	target := big.NewInt(1)
 	target.Lsh(target, uint(256-targetBits))
 
@@ -34,9 +34,9 @@ func NewProofOfWork(b *Block) *ProofOfWork {
 func (pow *ProofOfWork) prepareData(nonce int) []byte {
 	data := bytes.Join(
 		[][]byte{
-			pow.block.PrevBlockHash,
-			pow.block.Data,
-			utils.IntToHex(pow.block.Timestamp),
+			pow.block.prevBlockHash,
+			pow.block.data,
+			utils.IntToHex(pow.block.timestamp),
 			utils.IntToHex(int64(targetBits)),
 			utils.IntToHex(int64(nonce)),
 		},
@@ -47,7 +47,7 @@ func (pow *ProofOfWork) prepareData(nonce int) []byte {
 }
 
 // Run performs a proof-of-work
-func (pow *ProofOfWork) Run() (int, []byte) {
+func (pow *ProofOfWork) run() (int, []byte) {
 	var hashInt big.Int
 	var hash [32]byte
 	nonce := 0
@@ -72,10 +72,10 @@ func (pow *ProofOfWork) Run() (int, []byte) {
 }
 
 // Validate validates block's PoW
-func (pow *ProofOfWork) Validate() bool {
+func (pow *ProofOfWork) validate() bool {
 	var hashInt big.Int
 
-	data := pow.prepareData(pow.block.Nonce)
+	data := pow.prepareData(pow.block.nonce)
 	hash := sha256.Sum256(data)
 	hashInt.SetBytes(hash[:])
 
